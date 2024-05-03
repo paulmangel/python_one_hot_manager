@@ -8,7 +8,7 @@ class OneHotManager() :
             self.df = dataFrame
         else : 
             self.df = dataFrame.copy()
-        self.categorial_columns_data = {} # a dict to store data on the split columns needed to merge them back.
+        self._categorial_columns_data = {} # a dict to store data on the split columns needed to merge them back.
         self.df_len = len(self.df)
     
     def add_column_data(self, column_title): # add a column's data to the dictionnary. Doesn't need to be called by user. is automatically done before splitting a column.
@@ -24,28 +24,30 @@ class OneHotManager() :
             category_counts = column_data.value_counts().to_dict()
 
             # Add column data to the dictionary
-            self.categorial_columns_data[column_title] = {
+            self._categorial_columns_data[column_title] = {
                 'title': column_title,
                 'categories': categories,
                 'category_counts': category_counts,
                 'status' : 'merged', # status merged or split
                 'names_split_columns' : []
             }
-
-    def manually_add_split_column_data(self, original_column_title, split_columns_titles_list, categories_list , is_rescaled = False):
-        print("warning, method not operationnal yet")
-        new_dict = {original_column_title : {}}
-        new_dict[original_column_title]['categories'] = categories_list
-        new_dict[original_column_title]['names_split_columns'] = split_columns_titles_list
-        if is_rescaled :
-            new_dict[original_column_title]['status'] = 'split_rescaled'
-        else :
-            new_dict[original_column_title]['status'] = 'split'
-        
   
     def add_multiple_columns_data(self, column_list) : 
         for column_title in column_list : 
             self.add_column_data(column_title)
+
+
+    # # use this function at your own risk : incorrect data will introduce bugs.
+    # def manually_add_split_column_data(self, original_column_title, split_columns_titles_list, categories_list , is_rescaled = False):
+    #     print("warning, method not operationnal yet")
+    #     new_dict = {original_column_title : {}}
+    #     new_dict[original_column_title]['categories'] = categories_list
+    #     new_dict[original_column_title]['names_split_columns'] = split_columns_titles_list
+    #     if is_rescaled :
+    #         new_dict[original_column_title]['status'] = 'split_rescaled'
+    #     else :
+    #         new_dict[original_column_title]['status'] = 'split'
+
 
     def make_new_column_name(self, column_title, category):
         return "OneHot_" + str(column_title)+"_"+ str(category)
@@ -53,21 +55,21 @@ class OneHotManager() :
     def split_column(self,column_title, rescale = False) :  # adds the data of the column to the dictionary, then splits the column 
         self.add_column_data(column_title)
         names_dict = {}
-        for category in self.categorial_columns_data[column_title]['categories'] :
+        for category in self._categorial_columns_data[column_title]['categories'] :
             new_name = self.make_new_column_name(column_title, category)
             if rescale :
-                ratio = np.sqrt( self.df_len/self.categorial_columns_data[column_title]['category_counts'][category] )
+                ratio = np.sqrt( self.df_len/self._categorial_columns_data[column_title]['category_counts'][category] )
             else :
                 ratio = 1
             self.df[new_name] =  self.df[column_title].apply(lambda x: ratio if x == category else 0)
             names_dict[new_name] =  category
         self.df.drop(columns=[column_title], inplace = True)
         if rescale :
-            self.categorial_columns_data[column_title]['status'] = 'split_rescale'
+            self._categorial_columns_data[column_title]['status'] = 'split_rescale'
         else :
-            self.categorial_columns_data[column_title]['status'] = 'split'
+            self._categorial_columns_data[column_title]['status'] = 'split'
 
-        self.categorial_columns_data[column_title]['names_split_columns'] = names_dict
+        self._categorial_columns_data[column_title]['names_split_columns'] = names_dict
         
     def split_multiple_columns(self, column_list, rescale = False) : 
         for column_title in column_list : 
@@ -82,12 +84,12 @@ class OneHotManager() :
     #     df.loc[row_index, columns_list]
 
     def reconstruct_column(self, column_title) :
-        name_map = self.categorial_columns_data[column_title]['names_split_columns']# dict mapping column names with categories
-        status = self.categorial_columns_data[column_title]['status']
+        name_map = self._categorial_columns_data[column_title]['names_split_columns']# dict mapping column names with categories
+        status = self._categorial_columns_data[column_title]['status']
         if 'split' in status :
             if 'rescaled' in status  :
                 for cat_column_name, category in name_map.items() :
-                    inv_ratio = np.sqrt(self.categorial_columns_data[column_title]['category_counts'][category] / self.df_len )
+                    inv_ratio = np.sqrt(self._categorial_columns_data[column_title]['category_counts'][category] / self.df_len )
                     self.df[cat_column_name] = self.df[cat_column_name] * inv_ratio  
             new_column = []
             for index, row in self.df.iterrows():
@@ -97,7 +99,7 @@ class OneHotManager() :
                 new_column.append(max(values_dict, key=values_dict.get))
             self.df[column_title] = new_column
             self.df.drop(columns=name_map.keys(), inplace = True)
-            self.categorial_columns_data[column_title]['status'] = 'merged'
+            self._categorial_columns_data[column_title]['status'] = 'merged'
         else : 
             print(f"error : the column {column_title} isn't split, can't merge it.")
 
@@ -106,8 +108,8 @@ class OneHotManager() :
             self.reconstruct_column(column_title)
 
     def reconstruct_all_columns(self, verbose = False) : 
-        for column_title, col_dict in self.categorial_columns_data.items() :
-            is_split = 'split'  in self.categorial_columns_data[column_title]['status']
+        for column_title, col_dict in self._categorial_columns_data.items() :
+            is_split = 'split'  in self._categorial_columns_data[column_title]['status']
             if is_split  :
                 self.reconstruct_column(column_title)
             if verbose : 
@@ -135,11 +137,11 @@ if __name__ == "__main__":
 
     manager1 = OneHotManager(test_df, inplace = False) # inplace is false by default.
 
-    print(manager1.categorial_columns_data)
+    print(manager1._categorial_columns_data)
 
     manager1.split_multiple_columns(['Column1', 'Column2' ], rescale = True) # rescale is false by default
 
-    print(manager1.categorial_columns_data)
+    print(manager1._categorial_columns_data)
     print()
     print(manager1.df)
     print()
