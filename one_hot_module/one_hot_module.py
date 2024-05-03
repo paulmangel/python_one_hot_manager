@@ -37,6 +37,9 @@ class OneHotManager() :
             self.add_column_data(column_title)
 
 
+
+
+
     # # use this function at your own risk : incorrect data will introduce bugs.
     # def manually_add_split_column_data(self, original_column_title, split_columns_titles_list, categories_list , is_rescaled = False):
     #     print("warning, method not operationnal yet")
@@ -47,6 +50,7 @@ class OneHotManager() :
     #         new_dict[original_column_title]['status'] = 'split_rescaled'
     #     else :
     #         new_dict[original_column_title]['status'] = 'split'
+
 
 
     def make_new_column_name(self, column_title, category):
@@ -150,5 +154,6 @@ if __name__ == "__main__":
     manager1.reconstruct_all_columns(verbose = True) # verbose is false by default
 
     print(manager1.df)
+
 
 
