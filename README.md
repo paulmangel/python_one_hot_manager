@@ -12,6 +12,7 @@ You can them merge them all back together after treating them however you need.
 
 
 ################   USE    ########################
+
 see example code at the end of the readme.
 
 Short version : 
@@ -44,7 +45,6 @@ use self.df to access the dataframe.
 ################   Methods    ########################
 
 split_column
-
 def split_column(column_title: str, rescale: bool = False):
     """
 	Split a column with one-hot encoding. Data needed for the reconstruction is stored in the dictionnary self.categorial_columns_data
@@ -103,7 +103,7 @@ def reconstruct_all_columns(verbose: bool = False) :
 	(the status split or merged of each column is stored in self.categorial_columns_data, and updated by split_column and reconstruct_column)
 	
 	Args:
-	verbose (bool) : default is false. Will print the name of the columns documented in categorial_columns_data , and tell for each of them if it was split (and therefore are reconstructed by this function)
+	verbose (bool, optional) : default is false. Will print the name of the columns documented in categorial_columns_data , and tell for each of them if it was split (and therefore are reconstructed by this function)
 	"""
 
 
