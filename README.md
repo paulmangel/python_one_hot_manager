@@ -11,7 +11,7 @@ You only need to use the one_hot_module.py file and import it from your main pro
 
 
 
-################   USE    ########################
+################   Use    ########################
 
 see example code at the end of the readme.
 
