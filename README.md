@@ -15,7 +15,6 @@ You only need to use the one_hot_module.py file and import it from your main pro
 
 see example code at the end of the readme.
 
-Short version : 
 The module contains one class named OneHotManager, that manages all operations.
 First,import and initialize your manager with your dataframe (use the inplace option to choose to work on your original dataframe or on a copy)
 
