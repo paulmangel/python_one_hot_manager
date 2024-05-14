@@ -7,7 +7,7 @@ You can them merge them all back together after treating them however you need.
 
 ################   Install    ########################
 
-
+You only need to use the one_hot_module.py file and import it from your main program.
 
 
 
