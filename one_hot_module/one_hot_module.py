@@ -28,7 +28,7 @@ class OneHotManager() :
                 'title': column_title,
                 'categories': categories,
                 'category_counts': category_counts,
-                'status' : 'merged', # status merged or split
+                'status' : 'merged', # status merged or split , or split_rescaled
                 'names_split_columns' : []
             }
   
@@ -69,7 +69,7 @@ class OneHotManager() :
             names_dict[new_name] =  category
         self.df.drop(columns=[column_title], inplace = True)
         if rescale :
-            self._categorial_columns_data[column_title]['status'] = 'split_rescale'
+            self._categorial_columns_data[column_title]['status'] = 'split_rescaled'
         else :
             self._categorial_columns_data[column_title]['status'] = 'split'
 
