@@ -1,5 +1,8 @@
 import pandas as pd
 import numpy as np
+import json
+import os
+
 
 # this class can split categorial columns using one-hot encoding, then merge them back to a single column.
 class OneHotManager() : 
@@ -9,9 +12,10 @@ class OneHotManager() :
         else : 
             self.df = dataFrame.copy()
         self._categorial_columns_data = {} # a dict to store data on the split columns needed to merge them back.
+        self._quantitative_column_data = {}
         self.df_len = len(self.df)
     
-    def add_column_data(self, column_title): # add a column's data to the dictionnary. Doesn't need to be called by user. is automatically done before splitting a column.
+    def add_cat_column_data(self, column_title): # add a column's data to the dictionnary. Doesn't need to be called by user. is automatically done before splitting a column.
         # Ensure column_title exists in the dataset
         if column_title not in self.df :
             print(f"Error, Column '{column_title}' does not exist in the dataset.")
@@ -31,10 +35,51 @@ class OneHotManager() :
                 'status' : 'merged', # status merged or split , or split_rescaled
                 'names_split_columns' : []
             }
+
   
     def add_multiple_columns_data(self, column_list) : 
         for column_title in column_list : 
             self.add_column_data(column_title)
+
+
+    def nomrmalize_column(self, column_title) :
+        if 'is normalized' in self._quantitative_column_data[column_title]['status']:
+            raise ValueError(f"Column '{column_title}' is already normalized")
+        previous_mean = self.df[column_title].mean()
+        previous_std = self.df[column_title].std()
+        self.df[column_title] = (self.df[column_title] - previous_mean) / previous_std
+        self._quantitative_column_data[column_title] = {
+                'title': column_title,
+                'mean': previous_mean,
+                'sdt': previous_std,
+                'status' : 'is normalized'
+            }
+
+    def nomrmalize_multiple_columns(self, column_list) : 
+        for column_title in column_list : 
+            self.nomrmalize_column(column_title)
+
+
+    def reverse_normalize_column(self, column_title):
+        if column_title not in self._quantitative_column_data:
+            raise ValueError(f"Column '{column_title}' has not been normalized yet.")
+        if 'not normalized' in self._quantitative_column_data[column_title]['status']:
+            raise ValueError(f"Column '{column_title}' is already denormalized")
+        # Get previous mean and standard deviation from the stored information
+        previous_mean = self._quantitative_column_data[column_title]['mean']
+        previous_std = self._quantitative_column_data[column_title]['std']
+        # Reverse normalization by multiplying by the previous standard deviation and adding the previous mean
+        self.df[column_title] = (self.df[column_title] * previous_std) + previous_mean
+        # Update the stored information to indicate that the column is no longer normalized
+        self._quantitative_column_data[column_title]['status'] = 'not normalized'
+
+    def reverse_nomrmalize_multiple_columns(self, column_list) : 
+        for column_title in column_list : 
+            self.reverse_normalize_column(column_title)
+
+    def reverse_nomrmalize_all_columns(self, column_list) : 
+        for column_title in self._quantitative_column_data : 
+            self.reverse_normalize_column(column_title)
 
     # # use this function at your own risk : incorrect data will introduce bugs.
     # def manually_add_split_column_data(self, original_column_title, split_columns_titles_list, categories_list , is_rescaled = False):
@@ -46,6 +91,8 @@ class OneHotManager() :
     #         new_dict[original_column_title]['status'] = 'split_rescaled'
     #     else :
     #         new_dict[original_column_title]['status'] = 'split'
+
+
 
     def make_new_column_name(self, column_title, category):
         return "OneHot_" + str(column_title)+"_"+ str(category)
@@ -118,6 +165,33 @@ class OneHotManager() :
         for col in column_list:
             unique_values_dict[col] = pd.unique(self.df[col]).tolist()
         return unique_values_dict
+    
+
+
+    def save_state(self, base_name="my", path = "."): # path includes the begining of the name, and will 
+        categorial_path = f"{path}/{base_name}_categorial_columns_data.json"
+        quantitative_path = f"{path}/{base_name}_quantitative_column_data.json"
+        with open(categorial_path, 'w') as json_file:
+            json.dump(self._categorial_columns_data , json_file)
+        with open(quantitative_path, 'w') as json_file:
+            json.dump(self._quantitative_column_data , json_file)
+
+    def load_state(self, base_name="my", path="."):
+        categorial_path = f"{path}/{base_name}_categorial_columns_data.json"
+        quantitative_path = f"{path}/{base_name}_quantitative_column_data.json"
+        
+        try:
+            with open(categorial_path, 'r') as json_file:
+                self._categorial_columns_data = json.load(json_file)
+        except FileNotFoundError:
+            print(f"File '{categorial_path}' not found. No categorical data loaded.")
+            
+        try:
+            with open(quantitative_path, 'r') as json_file:
+                self._quantitative_column_data = json.load(json_file)
+        except FileNotFoundError:
+            print(f"File '{quantitative_path}' not found. No quantitative data loaded.")
+
 
 
 
