@@ -43,15 +43,17 @@ class OneHotManager() :
 
 
     def nomrmalize_column(self, column_title) :
-        if 'is normalized' in self._quantitative_column_data[column_title]['status']:
-            raise ValueError(f"Column '{column_title}' is already normalized")
+        if column_title in self._quantitative_column_data:
+            if 'is normalized' in self._quantitative_column_data[column_title]['status']:
+                raise ValueError(f"Column '{column_title}' is already normalized")
+        
         previous_mean = self.df[column_title].mean()
         previous_std = self.df[column_title].std()
         self.df[column_title] = (self.df[column_title] - previous_mean) / previous_std
         self._quantitative_column_data[column_title] = {
                 'title': column_title,
                 'mean': previous_mean,
-                'sdt': previous_std,
+                'std': previous_std,
                 'status' : 'is normalized'
             }
 
@@ -77,7 +79,7 @@ class OneHotManager() :
         for column_title in column_list : 
             self.reverse_normalize_column(column_title)
 
-    def reverse_nomrmalize_all_columns(self, column_list) : 
+    def reverse_nomrmalize_all_columns(self) : 
         for column_title in self._quantitative_column_data : 
             self.reverse_normalize_column(column_title)
 
@@ -98,7 +100,7 @@ class OneHotManager() :
         return "OneHot_" + str(column_title)+"_"+ str(category)
 
     def split_column(self,column_title, rescale = False) :  # adds the data of the column to the dictionary, then splits the column 
-        self.add_column_data(column_title)
+        self.add_cat_column_data(column_title)
         names_dict = {}
         for category in self._categorial_columns_data[column_title]['categories'] :
             new_name = self.make_new_column_name(column_title, category)
@@ -185,7 +187,7 @@ class OneHotManager() :
                 self._categorial_columns_data = json.load(json_file)
         except FileNotFoundError:
             print(f"File '{categorial_path}' not found. No categorical data loaded.")
-            
+
         try:
             with open(quantitative_path, 'r') as json_file:
                 self._quantitative_column_data = json.load(json_file)
